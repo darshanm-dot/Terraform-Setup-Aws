@@ -110,3 +110,26 @@ Jenkins Build Started
 <current date and time>
 Build Completed Successfully
 Finished: SUCCESS
+
+## for Git Repo Connect
+
+Step 2: Create GitHub repository
+
+Repo name: jenkins-demo
+
+Visibility: Public
+
+Step 3: Add sample code (local / Jenkins server)
+git clone https://github.com/<username>/jenkins-demo.git
+cd jenkins-demo
+echo "Hello Jenkins GitHub Integration" > index.html
+git add .
+git commit -m "Initial commit"
+git push origin main
+
+# back to jenkies link
+in create project select free style
+in scource mnage select GIT
+and change Branch Master To main a
+save 
+and build now 
