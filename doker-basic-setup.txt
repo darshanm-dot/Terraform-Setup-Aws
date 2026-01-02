@@ -1,0 +1,79 @@
+sudo apt update
+sudo apt upgrade -y
+
+sudo apt install -y ca-certificates curl gnupg
+
+sudo install -m 0755 -d /etc/apt/keyrings
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | \
+sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+
+echo \
+"deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] \
+https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | \
+sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt update
+sudo apt install -y docker-ce docker-ce-cli containerd.io \
+docker-buildx-plugin docker-compose-plugin
+
+sudo systemctl enable docker
+sudo systemctl start docker
+
+docker run hello-world
+
+mkdir demo
+cd demo
+
+nano hello.c
+
+#include <stdio.h>
+
+int main() {
+    printf("Hello world\n");
+    return 0;
+}
+
+
+nano Dockerfile
+
+FROM ubuntu:22.04
+
+RUN apt update && apt install -y gcc && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+COPY hello.c .
+
+RUN gcc hello.c -o hello
+
+CMD ["./hello"]
+
+
+docker build -t hellodocker .
+
+docker run hellodocker
+
+docker login
+
+# after login create a new repo in docker hub 
+docker images
+
+docker tag hellodocker <repo-name>-m:latest
+
+docker push <repo-name>-m:latest
+
+docker pull <repo-name>-m:latest
+
+docker run <repo-name>-m 
+
+docker tag hellodocker <repo-name>-m:v1
+
+docker push <repo-name>-m:v1
+
+docker pull <repo-name>-m:v1
+
+docker run <repo-name>-m 
+
+
+
