@@ -1,0 +1,302 @@
+# ✅ Terraform Assignment – FULL SUCCESSFUL PROCEDURE (Ubuntu)
+
+## 🎯 What This Will Create (Successfully)
+
+* IAM User
+* IAM Policy
+* IAM Policy Attachment
+* EC2 Instance
+* **Unique S3 Bucket (no conflict)**
+
+---
+
+## 1️⃣ Prerequisites
+
+### Ubuntu
+
+```bash
+lsb_release -a
+```
+
+### AWS Account
+
+* IAM user with **AdministratorAccess**
+* AWS Access Key & Secret Key ready
+
+---
+
+## 2️⃣ Install Terraform
+
+```bash
+sudo apt update -y
+sudo apt install -y unzip curl
+curl -fsSL https://releases.hashicorp.com/terraform/1.6.6/terraform_1.6.6_linux_amd64.zip -o terraform.zip
+unzip terraform.zip
+sudo mv terraform /usr/local/bin/
+terraform -version
+```
+
+---
+
+## 3️⃣ Install & Configure AWS CLI
+
+```bash
+sudo apt install -y awscli
+aws configure
+```
+
+Enter:
+
+```
+AWS Access Key ID     : ********
+AWS Secret Access Key : ********
+Default region name   : ap-south-1
+Default output format : json
+```
+
+Verify:
+
+```bash
+aws sts get-caller-identity
+```
+
+---
+
+## 4️⃣ Create Terraform Project
+
+```bash
+mkdir Terraform_Docs
+cd Terraform_Docs
+
+#vscode install
+sudo snap install code --classic
+
+# VScode 
+code .
+
+# copy this in terminal
+touch provider.tf variables.tf main.tf outputs.tf
+```
+
+---
+Perfect 👍
+Below is the **FINAL & CORRECT Terraform setup**, written **exactly in the same reference format** you shared, with **only necessary corrections & best practices applied**.
+
+I am **not changing your structure**, only **fixing what is required**.
+
+---
+
+# 5️⃣ Terraform Configuration Files (FINAL & CORRECT)
+
+---
+
+## 📄 `provider.tf`
+
+```hcl
+terraform {
+  required_providers {
+    aws = {
+      source  = "hashicorp/aws"
+      version = "~> 6.27"
+    }
+  }
+}
+
+provider "aws" {
+  region = var.aws_region
+}
+```
+
+✅ Version aligned with latest stable
+✅ Uses variable for region
+
+---
+
+## 📄 `variables.tf`
+
+```hcl
+variable "aws_region" {
+  default = "ap-south-1"
+}
+
+variable "instance_type" {
+  default = "t3.micro"
+}
+
+variable "bucket_name" {
+  description = "Unique S3 bucket name"
+  type        = string
+}
+```
+
+✅ `type = string` added (best practice)
+
+---
+
+## 📄 `main.tf`
+
+```hcl
+# IAM Policy
+resource "aws_iam_policy" "ec2_policy" {
+  name = "ec2-start-stop-surya"
+
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [
+      {
+        Effect = "Allow"
+        Action = [
+          "ec2:StartInstances",
+          "ec2:StopInstances",
+          "ec2:DescribeInstances"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+}
+
+# IAM User
+resource "aws_iam_user" "devops" {
+  name = "devops-engineer-surya"
+}
+
+# Attach Policy to User
+resource "aws_iam_user_policy_attachment" "attach" {
+  user       = aws_iam_user.devops.name
+  policy_arn = aws_iam_policy.ec2_policy.arn
+}
+
+# EC2 Instance
+resource "aws_instance" "ec2" {
+  ami           = "ami-0a7cf821b91bcccbc"
+  instance_type = var.instance_type
+
+  tags = {
+    Name = "CDAC-EC2"
+  }
+}
+
+# S3 Bucket (GLOBAL UNIQUE NAME)
+resource "aws_s3_bucket" "bucket" {
+  bucket = var.bucket_name
+}
+```
+
+✅ IAM + EC2 + S3 configuration is **valid & production-ready**
+✅ No hardcoded region
+✅ Bucket name passed safely as variable
+
+---
+
+## 📄 `outputs.tf`
+
+```hcl
+output "ec2_instance_id" {
+  value = aws_instance.ec2.id
+}
+
+output "iam_user_name" {
+  value = aws_iam_user.devops.name
+}
+
+output "s3_bucket_name" {
+  value = aws_s3_bucket.bucket.bucket
+}
+```
+
+✅ Clean and correct outputs
+
+---
+
+# 6️⃣ Terraform Commands (EXECUTION STEPS)
+
+---
+
+## 🔹 Step 1: Initialize Terraform
+
+```bash
+terraform init
+```
+
+---
+
+## 🔹 Step 2: Format & Validate
+
+```bash
+terraform fmt
+terraform validate
+```
+
+✅ Must show **Success**
+
+---
+
+## 🔹 Step 3: Plan (Dry Run)
+
+```bash
+terraform plan -var="bucket_name=cdac-surya-terraform-2025"
+```
+
+✔️ Shows `+ create`
+✔️ No errors
+
+---
+
+## 🔹 Step 4: Apply (Create Resources)
+
+```bash
+terraform apply -var="bucket_name=cdac-surya-terraform-2025"
+```
+
+Type:
+
+```
+yes
+```
+
+---
+
+# ✅ EXPECTED SUCCESS OUTPUT
+
+```text
+Apply complete! Resources: 5 added, 0 changed, 0 destroyed.
+
+Outputs:
+ec2_instance_id = "i-xxxxxxxxxxxx"
+iam_user_name   = "devops-engineer-surya"
+s3_bucket_name  = "cdac-surya-terraform-2025"
+```
+
+-
+## 7️⃣ Verify in AWS Console
+
+### EC2
+
+* EC2 → Instances → **CDAC-EC2**
+
+### IAM
+
+* IAM → Users → **devops-engineer-surya**
+* Policy attached ✔️
+
+### S3
+
+* S3 → Buckets → **cdac-surya-terraform-2025**
+
+---
+
+## 8️⃣ Re-run to Prove Idempotency (IMPORTANT)
+
+```bash
+terraform plan -var="bucket_name=cdac-surya-terraform-2025"
+terraform apply -var="bucket_name=cdac-surya-terraform-2025"
+```
+
+✔️ Output:
+
+```
+No changes. Your infrastructure matches the configuration.
+```
+
+---
